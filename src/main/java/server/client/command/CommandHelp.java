@@ -1,5 +1,6 @@
-package server.client;
+package server.client.command;
 
+import server.client.manager.ClientManager;
 import server.status.Status;
 
 public class CommandHelp extends ClientManager.Command {
@@ -15,12 +16,13 @@ public class CommandHelp extends ClientManager.Command {
                         HELP:
                         \t> CLOSE - закрыть соедингение и покинуть сервер
                         \t> DOWNLOAD:
-                        \t\t- file_name - скачать файл с сервера
                         \t\t- file_name1 file_name2 - скачать с сервера файл №1 под именем №2
-                        \t\t- file_name1 file_name2 continue - продолжить загрузку
+                        \t\t- file_name1 file_name2 -continue - продолжить загрузку
                         \t> ECHO string - вернуть строку
                         \t> TIME - показать строку
-                        \t> PING - окликнуть сервер""";
+                        \t> UPLOAD:
+                        \t\t- file_name1 file_name2 - загрузить на сервер файл №1 под именем №2
+                        \t\t- file_name1 file_name2 -continue - продолжить загрузку""";
         writeMessage(Status.SUCCESS.code(), message);
         super.writeEndMessage();
     }

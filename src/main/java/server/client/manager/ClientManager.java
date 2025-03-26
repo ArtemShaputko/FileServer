@@ -1,23 +1,23 @@
-package server.client;
+package server.client.manager;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import server.Server;
+import server.connector.Connector;
+import server.client.command.*;
 import server.download.Downloader;
 import server.status.Status;
 
 import java.io.*;
 import java.net.InetAddress;
-import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.Optional;
 
-public class ClientManager implements AutoCloseable {
-    private static final Logger logger = LoggerFactory.getLogger(ClientManager.class);
+public abstract class ClientManager {
+    protected static final Logger logger = LoggerFactory.getLogger(ClientManager.class);
     public static final String HEARTBEAT_REQUEST = "PING";
     public static final String HEARTBEAT_RESPONSE = "PONG";
     private boolean isConnected = false;
-    private PrintWriter writer;
+
     private final Downloader downloader;
     private int heartbeatTimes;
     long startTime;
@@ -27,7 +27,7 @@ public class ClientManager implements AutoCloseable {
         this.downloader = downloader;
     }
 
-    abstract class Command {
+    public abstract class Command {
         protected int COMMAND_LENGTH;
 
         protected abstract void execute();
@@ -41,10 +41,11 @@ public class ClientManager implements AutoCloseable {
         }
 
         protected void writeHeartbeatResponse() {
-            writer.write(HEARTBEAT_RESPONSE);
+            ClientManager.this.writeHeartbeatResponse();
         }
 
         protected void closeConnection() {
+            logger.info("Closing connection");
             isConnected = false;
         }
 
@@ -65,48 +66,42 @@ public class ClientManager implements AutoCloseable {
                 downloader.uploadFile(fileName, address, cont);
             } catch (IOException e) {
                 logger.error(e.getMessage());
-                logger.error(e.getMessage());
+                closeConnection();
             }
         }
     }
 
-    public void communicate(Socket clientSocket) throws IOException {
-        InputStream input = clientSocket.getInputStream();
-        clientAddress = clientSocket.getInetAddress();
-        var output = clientSocket.getOutputStream();
-        downloader.setIn(input);
-        downloader.setOut(output);
-        writer = new PrintWriter(output, true);
+    public void communicate() throws IOException {
         startTime = System.currentTimeMillis();
-        try (var reader = new BufferedReader(new InputStreamReader(input))) {
-            isConnected = true;
-            while (isConnected) {
-                try {
-                    String line = reader.readLine();
-                    if (line != null) {
-                        startTime = System.currentTimeMillis();
-                        String trimmedLine = line.trim();
-                        String[] commandArray = trimmedLine.split(" ", 2);
-                        getCommand(commandArray[0], trimmedLine).ifPresentOrElse(
-                                Command::execute,
-                                () -> {
-                                    writeMessage(Status.SUCCESS.code(), "Нет такой команды: " + commandArray[0]);
-                                    writeEndMessage();
-                                });
-                    }
-                } catch (SocketTimeoutException e) {
-                    heartbeat();
+        isConnected = true;
+        while (checkChannel() && isConnected) {
+            try {
+                String line = readLine();
+                if (line != null) {
+                    startTime = System.currentTimeMillis();
+                    String trimmedLine = line.trim();
+                    String[] commandArray = trimmedLine.split(" ", 2);
+                    getCommand(commandArray[0], trimmedLine).ifPresentOrElse(
+                            Command::execute,
+                            () -> {
+                                writeMessage(Status.SUCCESS.code(), "Нет такой команды: " + commandArray[0]);
+                                writeEndMessage();
+                            });
                 }
+            } catch (SocketTimeoutException e) {
+                heartbeat();
             }
         }
-        writer.close();
+        logger.info("Connection with client {} closed", clientAddress);
     }
+
+    public abstract boolean checkChannel();
 
     public void heartbeat() {
         logger.debug("Нет ответа от клиента {}", clientAddress.getHostAddress());
-        if(heartbeatTimes < Server.HEARTBEAT_LIMIT) {
+        if (heartbeatTimes < Connector.HEARTBEAT_LIMIT) {
             logger.debug("Отправляю heartbeat message");
-            writer.println(HEARTBEAT_REQUEST);
+            writeHeartbeatRequest();
             heartbeatTimes++;
         } else {
             logger.error("Превышен порог ожидания, отключаюсь");
@@ -131,23 +126,11 @@ public class ClientManager implements AutoCloseable {
         };
     }
 
-    private void writeMessage(int code, String message) {
-        if (writer != null) {
-            writer.println(code + " " + message);
-        }
-    }
+    protected abstract void writeMessage(int code, String message);
 
-    private void writeEndMessage() {
-        if (writer != null) {
-            writer.println(Status.END.code() + " END");
-        }
-    }
+    protected abstract void writeEndMessage();
 
-    @Override
-    public void close() {
-        if (writer != null) {
-            writer.close();
-            writer = null;
-        }
-    }
+    protected abstract void writeHeartbeatResponse();
+    protected abstract void writeHeartbeatRequest();
+    protected abstract String readLine() throws IOException;
 }

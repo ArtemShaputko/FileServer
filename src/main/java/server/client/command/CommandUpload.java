@@ -1,14 +1,15 @@
-package server.client;
+package server.client.command;
 
+import server.client.manager.ClientManager;
 import server.status.Status;
 
 import java.net.InetAddress;
 
-public class CommandUpload extends ClientManager.Command{
+public class CommandUpload extends ClientManager.Command {
     private final String line;
     private final InetAddress clientAddress;
 
-    CommandUpload(ClientManager manager, String line, InetAddress clientAddress) {
+    public CommandUpload(ClientManager manager, String line, InetAddress clientAddress) {
         manager.super();
         COMMAND_LENGTH = 8;
         this.line = line.trim();
@@ -23,7 +24,7 @@ public class CommandUpload extends ClientManager.Command{
             writeMessage(Status.ERROR.code(), "Нет имени файла");
         }
         boolean cont = args.length > 3 && args[3].equalsIgnoreCase("continue");
-        uploadFile(args[1], clientAddress, cont);
+        uploadFile("upload/" + args[1], clientAddress, cont);
     }
 
 }

@@ -1,5 +1,6 @@
-package server.client;
+package server.client.command;
 
+import server.client.manager.ClientManager;
 import server.status.Status;
 
 import java.net.InetAddress;
@@ -9,7 +10,7 @@ public class CommandDownload extends ClientManager.Command {
     private final String line;
     private final InetAddress clientAddress;
 
-    CommandDownload(ClientManager manager, String line, InetAddress clientAddress) {
+    public CommandDownload(ClientManager manager, String line, InetAddress clientAddress) {
         manager.super();
         COMMAND_LENGTH = 8;
         this.line = line.trim();
@@ -21,9 +22,9 @@ public class CommandDownload extends ClientManager.Command {
         var args = line.split(" ");
         boolean cont = args.length > 3 && args[3].equalsIgnoreCase("continue");
         super.writeEndMessage();
-        if(args.length < 2) {
+        if (args.length < 2) {
             writeMessage(Status.ERROR.code(), "DOWNLOAD: Нет имени файла");
         }
-        downloadFile(args[1], clientAddress, cont);
+        downloadFile("download/" + args[1], clientAddress, cont);
     }
 }

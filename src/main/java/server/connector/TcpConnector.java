@@ -1,35 +1,39 @@
-package server;
+package server.connector;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import server.client.*;
-import server.download.Downloader;
+import server.client.manager.ClientManager;
+import server.client.manager.TcpClientManager;
+import server.download.TcpDownloader;
 
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class Server {
-    private static final Logger logger = LoggerFactory.getLogger(Server.class);
+public class TcpConnector implements Connector{
+    private static final Logger logger = LoggerFactory.getLogger(TcpConnector.class);
     private final int port;
-    public static final int TIMEOUT = 20_000;
-    public static final int HEARTBEAT_LIMIT = 3;
 
-    public Server(int port) {
+    public TcpConnector(int port) {
         this.port = port;
     }
 
+    @Override
     public void start() {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
-            Downloader downloader = new Downloader();
+            TcpDownloader tcpDownloader = new TcpDownloader();
             while (true) {
                 try (Socket clientSocket = serverSocket.accept();
-                     ClientManager manager = new ClientManager(downloader)
+                     var reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                     var writer = new PrintWriter(clientSocket.getOutputStream(), true)
                 ) {
+                    tcpDownloader.setIn(clientSocket.getInputStream());
+                    tcpDownloader.setOut(clientSocket.getOutputStream());
+                    ClientManager manager = new TcpClientManager(tcpDownloader,writer, reader, clientSocket);
                     logger.info("Подключился клиент {}", clientSocket.getRemoteSocketAddress());
                     clientSocket.setKeepAlive(true);
                     clientSocket.setSoTimeout(TIMEOUT);
-                    manager.communicate(clientSocket);
+                    manager.communicate();
                     logger.info("Отключился от клиента {}", clientSocket.getRemoteSocketAddress());
                 } catch (Exception e) {
                     logger.error("Превышено время ожидания, автоматическое отключение {}", e.getMessage());

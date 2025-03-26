@@ -1,6 +1,8 @@
-package server.client;
+package server.client.command;
 
-class CommandClose extends ClientManager.Command {
+import server.client.manager.ClientManager;
+
+public class CommandClose extends ClientManager.Command {
 
     public CommandClose(ClientManager manager) {
         manager.super();

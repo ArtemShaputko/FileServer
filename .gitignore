@@ -34,7 +34,8 @@ build/
 ### VS Code ###
 .vscode/
 
-trash/
+upload/
+download/
 
 ### Mac OS ###
 .DS_Store

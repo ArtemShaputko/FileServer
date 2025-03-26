@@ -1,5 +1,6 @@
-package server.client;
+package server.client.command;
 
+import server.client.manager.ClientManager;
 import server.status.Status;
 
 public class CommandEcho extends ClientManager.Command {

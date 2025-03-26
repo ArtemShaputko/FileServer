@@ -1,5 +1,6 @@
-package server.client;
+package server.client.command;
 
+import server.client.manager.ClientManager;
 import server.status.Status;
 
 import java.io.File;
@@ -11,7 +12,7 @@ public class CommandList extends ClientManager.Command {
 
     @Override
     protected void execute() {
-        File directory = new File("."); // Укажите путь к каталогу
+        File directory = new File("./download"); // Укажите путь к каталогу
 
         File[] files = directory.listFiles(); // Получаем массив файлов
         StringBuilder builder = new StringBuilder()
