@@ -24,7 +24,7 @@ public class CommandUpload extends ClientManager.Command {
             writeMessage(Status.ERROR.code(), "Нет имени файла");
         }
         boolean cont = args.length > 3 && args[3].equalsIgnoreCase("continue");
-        uploadFile("upload/" + args[1], clientAddress, cont);
+        uploadFile("upload/" + args[2], clientAddress, cont);
     }
 
 }

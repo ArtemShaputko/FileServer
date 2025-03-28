@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.connector.Connector;
 import server.client.command.*;
-import server.download.Downloader;
+import server.downloader.Downloader;
 import server.status.Status;
 
 import java.io.*;

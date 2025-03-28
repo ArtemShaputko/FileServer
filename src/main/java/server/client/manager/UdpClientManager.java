@@ -1,6 +1,6 @@
 package server.client.manager;
 
-import server.download.UdpDownloader;
+import server.downloader.UdpDownloader;
 import server.socket.ReliableUdpSocket;
 
 import java.io.IOException;
@@ -8,13 +8,13 @@ import java.net.InetAddress;
 
 public class UdpClientManager extends ClientManager {
     private final ReliableUdpSocket socket;
-    private final int port;
+    private final int clientPort;
 
-    public UdpClientManager(UdpDownloader downloader, ReliableUdpSocket socket, InetAddress clientAddress, int port) {
+    public UdpClientManager(UdpDownloader downloader, ReliableUdpSocket socket, InetAddress clientAddress, int clientPort) {
         super(downloader);
         this.socket = socket;
         this.clientAddress = clientAddress;
-        this.port = port;
+        this.clientPort = clientPort;
     }
 
     @Override
@@ -25,7 +25,7 @@ public class UdpClientManager extends ClientManager {
     @Override
     protected void writeMessage(int code, String message) {
         try {
-            socket.send(code + " " + message, clientAddress, port);
+            socket.send(code + " " + message, clientAddress, clientPort);
         } catch (NullPointerException | IOException e) {
             logger.error(e.getMessage());
         }
@@ -39,7 +39,7 @@ public class UdpClientManager extends ClientManager {
     @Override
     protected void writeHeartbeatResponse() {
         try {
-            socket.send(ClientManager.HEARTBEAT_RESPONSE, clientAddress, port);
+            socket.send(ClientManager.HEARTBEAT_RESPONSE, clientAddress, clientPort);
         } catch (NullPointerException | IOException e) {
             logger.error(e.getMessage());
         }
@@ -48,7 +48,7 @@ public class UdpClientManager extends ClientManager {
     @Override
     protected void writeHeartbeatRequest() {
         try {
-            socket.send(ClientManager.HEARTBEAT_REQUEST, clientAddress, port);
+            socket.send(ClientManager.HEARTBEAT_REQUEST, clientAddress, clientPort);
         } catch (NullPointerException | IOException e) {
             logger.error(e.getMessage());
         }
@@ -57,6 +57,7 @@ public class UdpClientManager extends ClientManager {
     @Override
     protected String readLine() throws IOException {
         var message = socket.receive();
+        logger.debug("Message: {}",message.text());
         return message.text();
     }
 }

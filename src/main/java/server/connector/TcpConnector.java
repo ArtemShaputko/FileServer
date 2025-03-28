@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.client.manager.ClientManager;
 import server.client.manager.TcpClientManager;
-import server.download.TcpDownloader;
+import server.downloader.TcpDownloader;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -20,6 +20,7 @@ public class TcpConnector implements Connector{
 
     @Override
     public void start() {
+        logger.info("Starting TCP Connector");
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             TcpDownloader tcpDownloader = new TcpDownloader();
             while (true) {

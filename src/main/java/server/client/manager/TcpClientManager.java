@@ -1,6 +1,6 @@
 package server.client.manager;
 
-import server.download.TcpDownloader;
+import server.downloader.TcpDownloader;
 import server.status.Status;
 
 import java.io.BufferedReader;

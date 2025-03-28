@@ -1,15 +1,15 @@
-package server.download;
+package server.downloader;
 
 import java.net.InetAddress;
 import java.util.Objects;
 
-public class UploadRequest {
+public class DownloadRequest {
     private final InetAddress clientAddress;
     private final String fileName;
     private long progress;
     private boolean isSuccessful = false;
 
-    public UploadRequest(InetAddress clientAddress, String fileName) {
+    public DownloadRequest(InetAddress clientAddress, String fileName) {
         this.clientAddress = clientAddress;
         this.fileName = fileName;
         this.progress = 0;
@@ -19,7 +19,7 @@ public class UploadRequest {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        UploadRequest that = (UploadRequest) o;
+        DownloadRequest that = (DownloadRequest) o;
         return Objects.equals(clientAddress, that.clientAddress) && Objects.equals(fileName, that.fileName);
     }
 
@@ -52,4 +52,3 @@ public class UploadRequest {
         return isSuccessful;
     }
 }
-
