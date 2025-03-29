@@ -82,15 +82,15 @@ public class ReliableUdpSocket implements AutoCloseable {
         }
     }
 
-    public ReliableUdpSocket(int packetSize, boolean toStart) throws SocketException {
-        if (packetSize <= Packet.headerSize() || packetSize > 65507) {
-            throw new IllegalArgumentException("Invalid packet size");
-        }
-        this.packetSize = packetSize;
-        this.socket = new DatagramSocket();
+    public ReliableUdpSocket(int port, boolean toStart) throws SocketException {
+        this.socket = new DatagramSocket(port);
         if (toStart) {
             startServices();
         }
+    }
+
+    public ReliableUdpSocket(boolean toStart) throws SocketException {
+        this(65507, toStart);
     }
 
     public ReliableUdpSocket() throws SocketException {
@@ -99,6 +99,10 @@ public class ReliableUdpSocket implements AutoCloseable {
 
     public ReliableUdpSocket(int port) throws SocketException {
         this(port, 65507);
+    }
+
+    public int getPort() {
+        return socket.getLocalPort();
     }
 
     public void startServices() {
@@ -127,6 +131,7 @@ public class ReliableUdpSocket implements AutoCloseable {
                 while (!scheduler.isShutdown()) {
                     try {
                         socket.receive(packet);
+                        logger.info("received message, port {}", getPort());
                         processPacket(packet);
                     } catch (Exception e) {
                         if (!socket.isClosed()) {
@@ -140,6 +145,7 @@ public class ReliableUdpSocket implements AutoCloseable {
 
     private void processPacket(DatagramPacket udpPacket) throws IOException {
         Packet packet = deserialize(Arrays.copyOf(udpPacket.getData(), udpPacket.getLength()));
+        logger.info("message {}, is ack: {}", new String(packet.data, StandardCharsets.UTF_8), packet.isAck());
 
         if (packet.isAck()) {
             handleAck(packet.sequenceNumber());
@@ -149,7 +155,7 @@ public class ReliableUdpSocket implements AutoCloseable {
     }
 
     private void handleDataPacket(Packet packet, InetAddress senderAddress, int senderPort) throws IOException {
-        logger.debug("received packet: {}, expected packet: {}", packet.sequenceNumber, expectedSeqNumber);
+        logger.trace("received packet: {}, expected packet: {}", packet.sequenceNumber, expectedSeqNumber);
         if(packet.sequenceNumber <= expectedSeqNumber.get()) {
             sendAck(packet.sequenceNumber(), senderAddress, senderPort);
         }
@@ -204,7 +210,7 @@ public class ReliableUdpSocket implements AutoCloseable {
             socket.send(dp);
             info.retries++;
             info.lastSentTime = System.currentTimeMillis();
-            logger.debug("Resent packet [seq={}, retry={}]", seqNumber, info.retries);
+            logger.trace("Resent packet [seq={}, retry={}]", seqNumber, info.retries);
         } catch (IOException e) {
             logger.error("Failed to resend packet [seq={}]: {}", seqNumber, e.getMessage());
         }
@@ -255,7 +261,7 @@ public class ReliableUdpSocket implements AutoCloseable {
     }
 
     private void handleAck(int ackNumber) {
-        logger.debug("received ACK {}", ackNumber);
+        logger.trace("received ACK {}", ackNumber);
 
         windowLock.lock();
         try {

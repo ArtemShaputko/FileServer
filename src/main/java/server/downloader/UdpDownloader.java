@@ -141,7 +141,7 @@ public class UdpDownloader implements Downloader {
         long transferred = offset;
         pb.stepTo(offset);
         while (transferred < fileSize) {
-            buffer = socket.receive();
+            buffer = socket.receive(120_000);
 
             channel.write(ByteBuffer.wrap(buffer.data()), offset + transferred);
             transferred += buffer.length();
